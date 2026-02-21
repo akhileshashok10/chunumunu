@@ -57,12 +57,10 @@ h1{
     display:flex;
     justify-content:center;
     gap:25px;
-    transition:1s ease;
 }
 
 .hidden{
-    opacity:0;
-    pointer-events:none;
+    display:none;
 }
 
 button{
@@ -171,7 +169,7 @@ const gifContainer=document.getElementById("gifContainer");
 let fireworkInterval;
 let rocketInterval;
 
-/* Escape */
+/* Escape button */
 function moveButton(){
     const maxX=window.innerWidth-120;
     const maxY=window.innerHeight-60;
@@ -203,7 +201,7 @@ function createStars(){
 /* Explosion */
 function createExplosion(x,y){
     const colors=["#ffcc00","#ff004c","#00ccff","#ff8800","#ffffff","#ff00ff"];
-    for(let i=0;i<140;i++){
+    for(let i=0;i<150;i++){
         const p=document.createElement("div");
         p.classList.add("firework");
         p.style.left=x+"px";
@@ -238,7 +236,6 @@ function launchRocket(){
     },1000);
 }
 
-/* Start fireworks */
 function startFireworks(){
     fireworkInterval=setInterval(()=>{
         createExplosion(
@@ -255,6 +252,20 @@ function stopFireworks(){
     clearInterval(rocketInterval);
 }
 
+/* Fade music before reset */
+function fadeMusic(){
+    let fadeAudio=setInterval(()=>{
+        if(music.volume>0.05){
+            music.volume-=0.05;
+        } else {
+            music.volume=0;
+            music.pause();
+            music.currentTime=0;
+            clearInterval(fadeAudio);
+        }
+    },100);
+}
+
 /* Smooth reset */
 function smoothReset(){
 
@@ -264,23 +275,24 @@ function smoothReset(){
     question.innerHTML="WILL YOU BE MY VALENTINE CHUNUMUNU? ❤️";
 
     gifContainer.firstChild?.classList.add("fade-out");
-
     document.body.classList.remove("night");
 
     setTimeout(()=>{
         gifContainer.innerHTML="";
         buttons.classList.remove("hidden");
-    },1200);
+        music.volume=1; // reset for next time
+    },1500);
 }
 
-/* YES */
+/* YES CLICK */
 yesButton.addEventListener("click",function(){
 
     music.currentTime=0;
+    music.volume=1;
     music.play().catch(()=>{});
 
+    buttons.classList.add("hidden"); // immediately hide buttons
     document.body.classList.add("night");
-    buttons.classList.add("hidden");
 
     question.innerHTML="I Love You Chunumunu ❤️";
     question.classList.add("love-text");
@@ -290,9 +302,15 @@ yesButton.addEventListener("click",function(){
 
     gifContainer.innerHTML=`<img src="blow-kiss-cute-baby.gif" class="center-gif">`;
 
+    // Start fading music at 12.8 seconds
+    setTimeout(()=>{
+        fadeMusic();
+    },12800);
+
+    // Full smooth reset at 13.5 seconds
     setTimeout(()=>{
         smoothReset();
-    },14500);
+    },13500);
 });
 </script>
 
