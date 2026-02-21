@@ -17,63 +17,117 @@ body{
     justify-content:center;
     align-items:center;
     text-align:center;
-    transition:0.6s ease;
+    transition:1s ease;
 }
 
-.glow{
-    background:radial-gradient(circle,#fff0f6,#ffcce6);
+.night{
+    background:radial-gradient(circle at bottom,#050816,#000000);
 }
 
-.container{
-    position:relative;
-    z-index:2;
+.shake{
+    animation:shake 0.4s;
 }
+
+@keyframes shake{
+    0%{transform:translate(0);}
+    25%{transform:translate(-8px,5px);}
+    50%{transform:translate(8px,-5px);}
+    75%{transform:translate(-4px,4px);}
+    100%{transform:translate(0);}
+}
+
+.container{position:relative;z-index:2;}
 
 h1{
     color:#e60073;
-    font-size:clamp(24px,5vw,40px);
+    font-size:clamp(26px,5vw,42px);
     margin-bottom:25px;
 }
 
-/* BUTTON CONTAINER FIXED */
-.buttons{
-    position:relative;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:25px;
-    height:120px;
+.love-text{
+    font-size:48px;
+    color:#ff4da6;
+    animation:pulse 1.2s infinite, glow 2s infinite alternate;
 }
 
-/* BUTTON STYLE */
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.15);}
+    100%{transform:scale(1);}
+}
+
+@keyframes glow{
+    from{text-shadow:0 0 20px #ff99cc;}
+    to{text-shadow:0 0 60px #ff1a75;}
+}
+
+.buttons{
+    display:flex;
+    justify-content:center;
+    gap:25px;
+}
+
+.hidden{
+    opacity:0;
+    pointer-events:none;
+}
+
 button{
     border:none;
     border-radius:10px;
     padding:12px 28px;
     font-size:18px;
     cursor:pointer;
-    transition:all 0.3s ease;
     min-width:110px;
 }
 
-.yes-btn{
-    background:#ff4da6;
-    color:white;
+.yes-btn{background:#ff4da6;color:white;}
+.no-btn{background:#999;color:white;}
+
+.star{
+    position:fixed;
+    width:2px;height:2px;
+    background:white;
+    border-radius:50%;
+    animation:twinkle 2s infinite alternate;
 }
 
-/* NO BUTTON STARTS ALIGNED */
-.no-btn{
-    background:#999;
-    color:white;
+@keyframes twinkle{
+    from{opacity:0.3;}
+    to{opacity:1;}
 }
 
-/* FULLSCREEN GIF */
+.firework{
+    position:fixed;
+    width:4px;height:4px;
+    border-radius:50%;
+    pointer-events:none;
+    box-shadow:0 0 12px currentColor;
+    animation:explode 2s ease-out forwards;
+}
+
+@keyframes explode{
+    from{transform:translate(0,0);opacity:1;}
+    to{transform:translate(var(--x),var(--y));opacity:0;}
+}
+
+.rocket{
+    position:fixed;
+    width:3px;
+    height:15px;
+    background:white;
+    bottom:0;
+    animation:launch 1s linear forwards;
+}
+
+@keyframes launch{
+    to{transform:translateY(-70vh);}
+}
+
 .fullscreen-gif{
     position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
+    top:0;left:0;
+    width:100vw;height:100vh;
     background:black;
     display:flex;
     justify-content:center;
@@ -90,75 +144,22 @@ button{
     animation:zoomIn 6s ease-in-out infinite alternate;
 }
 
-.fade-out{
-    animation:fadeOut 3s ease forwards;
-}
+.fade-out{animation:fadeOut 3s ease forwards;}
 
-@keyframes fadeIn{
-    to{opacity:1;}
-}
-
-@keyframes fadeOut{
-    0%{opacity:1;}
-    100%{opacity:0;}
-}
-
-@keyframes zoomIn{
-    from{transform:scale(1);}
-    to{transform:scale(1.1);}
-}
-
-/* HEARTS */
-.heart{
-    position:absolute;
-    bottom:-20px;
-    font-size:20px;
-    animation:floatUp linear infinite;
-}
-
-@keyframes floatUp{
-    0%{transform:translateY(0);opacity:1;}
-    100%{transform:translateY(-110vh);opacity:0;}
-}
-
-/* CONFETTI */
-.confetti{
-    position:absolute;
-    width:8px;
-    height:8px;
-    top:-10px;
-    animation:fall linear forwards;
-}
-
-@keyframes fall{
-    to{transform:translateY(110vh) rotate(720deg);opacity:0;}
-}
-
-/* RING */
-.ring{
-    font-size:55px;
-    animation:pop 1s ease forwards;
-}
-
-@keyframes pop{
-    0%{transform:scale(0);}
-    80%{transform:scale(1.4);}
-    100%{transform:scale(1);}
-}
+@keyframes fadeIn{to{opacity:1;}}
+@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
+@keyframes zoomIn{from{transform:scale(1);}to{transform:scale(1.1);}}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h1>WILL YOU BE MY VALENTINE CHUNUMUNU? ❤️</h1>
-
-    <div class="buttons">
+    <h1 id="question">WILL YOU BE MY VALENTINE CHUNUMUNU? ❤️</h1>
+    <div class="buttons" id="buttons">
         <button class="yes-btn" id="yesButton">Yes 💕</button>
         <button class="no-btn" id="noButton">No 💔</button>
     </div>
-
-    <div id="result"></div>
 </div>
 
 <audio id="bgMusic" preload="auto">
@@ -166,115 +167,138 @@ button{
 </audio>
 
 <script>
-let size=18;
-const noButton=document.getElementById("noButton");
 const yesButton=document.getElementById("yesButton");
+const noButton=document.getElementById("noButton");
 const music=document.getElementById("bgMusic");
+const question=document.getElementById("question");
+const buttons=document.getElementById("buttons");
 
-/* ESCAPE FUNCTION */
+let fireworkInterval;
+let rocketInterval;
+
+/* Escape */
 function moveButton(){
     const maxX=window.innerWidth-120;
     const maxY=window.innerHeight-60;
-
     noButton.style.position="fixed";
     noButton.style.left=Math.random()*maxX+"px";
     noButton.style.top=Math.random()*maxY+"px";
-    noButton.style.transition="all 0.4s cubic-bezier(.17,.67,.83,.67)";
-
-    size+=4;
-    yesButton.style.fontSize=size+"px";
-    yesButton.style.padding=(size/1.8)+"px "+(size*1.4)+"px";
 }
 
-/* DISTANCE CHECK */
-function handleEscape(x,y){
+document.addEventListener("mousemove",(e)=>{
     const rect=noButton.getBoundingClientRect();
-    const distance=Math.hypot(
-        x-(rect.left+rect.width/2),
-        y-(rect.top+rect.height/2)
+    const d=Math.hypot(
+        e.clientX-(rect.left+rect.width/2),
+        e.clientY-(rect.top+rect.height/2)
     );
-    if(distance<120){
-        moveButton();
+    if(d<120) moveButton();
+});
+
+/* Stars */
+function createStars(){
+    for(let i=0;i<250;i++){
+        const s=document.createElement("div");
+        s.classList.add("star");
+        s.style.left=Math.random()*100+"vw";
+        s.style.top=Math.random()*100+"vh";
+        document.body.appendChild(s);
     }
 }
 
-/* DESKTOP */
-document.addEventListener("mousemove",(e)=>{
-    handleEscape(e.clientX,e.clientY);
-});
+/* Explosion types */
+function createExplosion(x,y,type){
+    const colors=["#ffcc00","#ff004c","#00ccff","#ff8800","#ffffff","#ff00ff"];
 
-/* MOBILE */
-document.addEventListener("touchmove",(e)=>{
-    const touch=e.touches[0];
-    handleEscape(touch.clientX,touch.clientY);
-});
+    let particles = type === "ring" ? 60 : 120;
+    let radius = type === "ring" ? 200 : 300;
 
-/* PREVENT CLICK */
-noButton.addEventListener("click",(e)=>{
-    e.preventDefault();
-    moveButton();
-});
+    for(let i=0;i<particles;i++){
+        const p=document.createElement("div");
+        p.classList.add("firework");
+        p.style.left=x+"px";
+        p.style.top=y+"px";
+        p.style.color=colors[Math.floor(Math.random()*colors.length)];
+        p.style.background=p.style.color;
 
-/* YES CLICK */
+        let angle = type==="ring" ? (i/particles)*2*Math.PI : Math.random()*2*Math.PI;
+        let distance = radius * (type==="ring"?1:Math.random());
+
+        p.style.setProperty('--x',Math.cos(angle)*distance+'px');
+        p.style.setProperty('--y',Math.sin(angle)*distance+'px');
+
+        document.body.appendChild(p);
+        setTimeout(()=>p.remove(),2000);
+    }
+
+    if(type==="mega"){
+        document.body.classList.add("shake");
+        setTimeout(()=>document.body.classList.remove("shake"),300);
+    }
+}
+
+/* Rockets */
+function launchRocket(){
+    const rocket=document.createElement("div");
+    rocket.classList.add("rocket");
+    rocket.style.left=Math.random()*100+"vw";
+    document.body.appendChild(rocket);
+
+    setTimeout(()=>{
+        rocket.remove();
+        createExplosion(
+            window.innerWidth*Math.random(),
+            window.innerHeight*(0.3+Math.random()*0.3),
+            ["normal","ring","mega"][Math.floor(Math.random()*3)]
+        );
+    },1000);
+}
+
+/* Continuous fireworks */
+function startFireworks(){
+    fireworkInterval=setInterval(()=>{
+        createExplosion(
+            Math.random()*window.innerWidth,
+            Math.random()*window.innerHeight*0.6,
+            ["normal","ring"][Math.floor(Math.random()*2)]
+        );
+    },600);
+
+    rocketInterval=setInterval(launchRocket,1200);
+}
+
+function stopFireworks(){
+    clearInterval(fireworkInterval);
+    clearInterval(rocketInterval);
+}
+
+/* YES */
 yesButton.addEventListener("click",function(){
 
     music.currentTime=0;
     music.play().catch(()=>{});
 
-    document.body.classList.add("glow");
+    document.body.classList.add("night");
+    buttons.classList.add("hidden");
 
-    document.getElementById("result").innerHTML=`
-        <div class="ring">💍</div>
-        <h2>YAYYYY CHUNUMUNU!!! ❤️😍🎉</h2>
-    `;
+    question.innerHTML="I Love You Chunumunu ❤️";
+    question.classList.add("love-text");
 
-    launchConfetti();
+    createStars();
+    startFireworks();
 
     const overlay=document.createElement("div");
     overlay.classList.add("fullscreen-gif");
     overlay.innerHTML=`<img src="blow-kiss-cute-baby.gif">`;
     document.body.appendChild(overlay);
 
-    /* 14100ms total */
-    setTimeout(()=>{
-        overlay.classList.add("fade-out");
-    },11100);
+    setTimeout(()=>overlay.classList.add("fade-out"),12000);
 
     setTimeout(()=>{
         overlay.remove();
-    },14100);
+        stopFireworks();
+        location.reload();
+    },16000);  // more time for fireworks
 });
-
-/* HEARTS */
-function createHeart(){
-    const heart=document.createElement("div");
-    heart.classList.add("heart");
-    heart.innerHTML="💖";
-    heart.style.left=Math.random()*100+"vw";
-    heart.style.fontSize=(Math.random()*20+15)+"px";
-    heart.style.animationDuration=(Math.random()*3+4)+"s";
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),7000);
-}
-setInterval(createHeart,300);
-
-/* CONFETTI */
-function launchConfetti(){
-    for(let i=0;i<150;i++){
-        const confetti=document.createElement("div");
-        confetti.classList.add("confetti");
-        confetti.style.left=Math.random()*100+"vw";
-        confetti.style.backgroundColor=randomColor();
-        confetti.style.animationDuration=(Math.random()*3+2)+"s";
-        document.body.appendChild(confetti);
-        setTimeout(()=>confetti.remove(),5000);
-    }
-}
-
-function randomColor(){
-    const colors=["#ff4da6","#ffcc00","#00ccff","#66ff66","#ff6666"];
-    return colors[Math.floor(Math.random()*colors.length)];
-}
 </script>
 
 </body>
