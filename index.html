@@ -17,7 +17,7 @@ body{
     justify-content:center;
     align-items:center;
     text-align:center;
-    transition:1s ease;
+    transition:1.5s ease;
 }
 
 .night{
@@ -33,6 +33,7 @@ h1{
     color:#e60073;
     font-size:clamp(26px,5vw,42px);
     margin-bottom:25px;
+    transition:1s ease;
 }
 
 .love-text{
@@ -56,6 +57,7 @@ h1{
     display:flex;
     justify-content:center;
     gap:25px;
+    transition:1s ease;
 }
 
 .hidden{
@@ -115,7 +117,6 @@ button{
     to{transform:translateY(-75vh);}
 }
 
-/* Bigger centered GIF */
 .center-gif{
     margin-top:30px;
     width:380px;
@@ -123,6 +124,11 @@ button{
     border-radius:25px;
     box-shadow:0 0 40px rgba(255,255,255,0.6);
     animation:fadeIn 1s ease forwards, float 3s ease-in-out infinite alternate;
+    transition:1s ease;
+}
+
+.fade-out{
+    opacity:0;
 }
 
 @keyframes fadeIn{
@@ -195,13 +201,9 @@ function createStars(){
 }
 
 /* Explosion */
-function createExplosion(x,y,type){
+function createExplosion(x,y){
     const colors=["#ffcc00","#ff004c","#00ccff","#ff8800","#ffffff","#ff00ff"];
-
-    let particles = type==="ring"?80:150;
-    let radius = type==="ring"?220:340;
-
-    for(let i=0;i<particles;i++){
+    for(let i=0;i<140;i++){
         const p=document.createElement("div");
         p.classList.add("firework");
         p.style.left=x+"px";
@@ -209,8 +211,8 @@ function createExplosion(x,y,type){
         p.style.color=colors[Math.floor(Math.random()*colors.length)];
         p.style.background=p.style.color;
 
-        let angle = type==="ring" ? (i/particles)*2*Math.PI : Math.random()*2*Math.PI;
-        let distance = radius*(type==="ring"?1:Math.random());
+        const angle=Math.random()*2*Math.PI;
+        const distance=Math.random()*350;
 
         p.style.setProperty('--x',Math.cos(angle)*distance+'px');
         p.style.setProperty('--y',Math.sin(angle)*distance+'px');
@@ -231,28 +233,44 @@ function launchRocket(){
         rocket.remove();
         createExplosion(
             Math.random()*window.innerWidth,
-            window.innerHeight*(0.3+Math.random()*0.3),
-            ["normal","ring"][Math.floor(Math.random()*2)]
+            window.innerHeight*(0.3+Math.random()*0.3)
         );
     },1000);
 }
 
-/* Continuous fireworks */
+/* Start fireworks */
 function startFireworks(){
     fireworkInterval=setInterval(()=>{
         createExplosion(
             Math.random()*window.innerWidth,
-            Math.random()*window.innerHeight*0.7,
-            ["normal","ring"][Math.floor(Math.random()*2)]
+            Math.random()*window.innerHeight*0.7
         );
-    },300);  // More frequent explosions
+    },300);
 
-    rocketInterval=setInterval(launchRocket,600); // More rockets
+    rocketInterval=setInterval(launchRocket,600);
 }
 
 function stopFireworks(){
     clearInterval(fireworkInterval);
     clearInterval(rocketInterval);
+}
+
+/* Smooth reset */
+function smoothReset(){
+
+    stopFireworks();
+
+    question.classList.remove("love-text");
+    question.innerHTML="WILL YOU BE MY VALENTINE CHUNUMUNU? ❤️";
+
+    gifContainer.firstChild?.classList.add("fade-out");
+
+    document.body.classList.remove("night");
+
+    setTimeout(()=>{
+        gifContainer.innerHTML="";
+        buttons.classList.remove("hidden");
+    },1200);
 }
 
 /* YES */
@@ -273,9 +291,8 @@ yesButton.addEventListener("click",function(){
     gifContainer.innerHTML=`<img src="blow-kiss-cute-baby.gif" class="center-gif">`;
 
     setTimeout(()=>{
-        stopFireworks();
-        location.reload();
-    },14500);  // 14.5 seconds total celebration
+        smoothReset();
+    },14500);
 });
 </script>
 
