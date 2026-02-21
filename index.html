@@ -24,19 +24,10 @@ body{
     background:radial-gradient(circle at bottom,#050816,#000000);
 }
 
-.shake{
-    animation:shake 0.4s;
+.container{
+    position:relative;
+    z-index:2;
 }
-
-@keyframes shake{
-    0%{transform:translate(0);}
-    25%{transform:translate(-8px,5px);}
-    50%{transform:translate(8px,-5px);}
-    75%{transform:translate(-4px,4px);}
-    100%{transform:translate(0);}
-}
-
-.container{position:relative;z-index:2;}
 
 h1{
     color:#e60073;
@@ -102,7 +93,7 @@ button{
     width:4px;height:4px;
     border-radius:50%;
     pointer-events:none;
-    box-shadow:0 0 12px currentColor;
+    box-shadow:0 0 14px currentColor;
     animation:explode 2s ease-out forwards;
 }
 
@@ -114,41 +105,35 @@ button{
 .rocket{
     position:fixed;
     width:3px;
-    height:15px;
+    height:18px;
     background:white;
     bottom:0;
     animation:launch 1s linear forwards;
 }
 
 @keyframes launch{
-    to{transform:translateY(-70vh);}
+    to{transform:translateY(-75vh);}
 }
 
-.fullscreen-gif{
-    position:fixed;
-    top:0;left:0;
-    width:100vw;height:100vh;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-    opacity:0;
-    animation:fadeIn 1s forwards;
+/* Bigger centered GIF */
+.center-gif{
+    margin-top:30px;
+    width:380px;
+    max-width:85vw;
+    border-radius:25px;
+    box-shadow:0 0 40px rgba(255,255,255,0.6);
+    animation:fadeIn 1s ease forwards, float 3s ease-in-out infinite alternate;
 }
 
-.fullscreen-gif img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    animation:zoomIn 6s ease-in-out infinite alternate;
+@keyframes fadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
 }
 
-.fade-out{animation:fadeOut 3s ease forwards;}
-
-@keyframes fadeIn{to{opacity:1;}}
-@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
-@keyframes zoomIn{from{transform:scale(1);}to{transform:scale(1.1);}}
+@keyframes float{
+    from{transform:translateY(0);}
+    to{transform:translateY(-12px);}
+}
 </style>
 </head>
 
@@ -156,10 +141,13 @@ button{
 
 <div class="container">
     <h1 id="question">WILL YOU BE MY VALENTINE CHUNUMUNU? ❤️</h1>
+
     <div class="buttons" id="buttons">
         <button class="yes-btn" id="yesButton">Yes 💕</button>
         <button class="no-btn" id="noButton">No 💔</button>
     </div>
+
+    <div id="gifContainer"></div>
 </div>
 
 <audio id="bgMusic" preload="auto">
@@ -172,6 +160,7 @@ const noButton=document.getElementById("noButton");
 const music=document.getElementById("bgMusic");
 const question=document.getElementById("question");
 const buttons=document.getElementById("buttons");
+const gifContainer=document.getElementById("gifContainer");
 
 let fireworkInterval;
 let rocketInterval;
@@ -196,7 +185,7 @@ document.addEventListener("mousemove",(e)=>{
 
 /* Stars */
 function createStars(){
-    for(let i=0;i<250;i++){
+    for(let i=0;i<300;i++){
         const s=document.createElement("div");
         s.classList.add("star");
         s.style.left=Math.random()*100+"vw";
@@ -205,12 +194,12 @@ function createStars(){
     }
 }
 
-/* Explosion types */
+/* Explosion */
 function createExplosion(x,y,type){
     const colors=["#ffcc00","#ff004c","#00ccff","#ff8800","#ffffff","#ff00ff"];
 
-    let particles = type === "ring" ? 60 : 120;
-    let radius = type === "ring" ? 200 : 300;
+    let particles = type==="ring"?80:150;
+    let radius = type==="ring"?220:340;
 
     for(let i=0;i<particles;i++){
         const p=document.createElement("div");
@@ -221,18 +210,13 @@ function createExplosion(x,y,type){
         p.style.background=p.style.color;
 
         let angle = type==="ring" ? (i/particles)*2*Math.PI : Math.random()*2*Math.PI;
-        let distance = radius * (type==="ring"?1:Math.random());
+        let distance = radius*(type==="ring"?1:Math.random());
 
         p.style.setProperty('--x',Math.cos(angle)*distance+'px');
         p.style.setProperty('--y',Math.sin(angle)*distance+'px');
 
         document.body.appendChild(p);
         setTimeout(()=>p.remove(),2000);
-    }
-
-    if(type==="mega"){
-        document.body.classList.add("shake");
-        setTimeout(()=>document.body.classList.remove("shake"),300);
     }
 }
 
@@ -246,9 +230,9 @@ function launchRocket(){
     setTimeout(()=>{
         rocket.remove();
         createExplosion(
-            window.innerWidth*Math.random(),
+            Math.random()*window.innerWidth,
             window.innerHeight*(0.3+Math.random()*0.3),
-            ["normal","ring","mega"][Math.floor(Math.random()*3)]
+            ["normal","ring"][Math.floor(Math.random()*2)]
         );
     },1000);
 }
@@ -258,12 +242,12 @@ function startFireworks(){
     fireworkInterval=setInterval(()=>{
         createExplosion(
             Math.random()*window.innerWidth,
-            Math.random()*window.innerHeight*0.6,
+            Math.random()*window.innerHeight*0.7,
             ["normal","ring"][Math.floor(Math.random()*2)]
         );
-    },600);
+    },300);  // More frequent explosions
 
-    rocketInterval=setInterval(launchRocket,1200);
+    rocketInterval=setInterval(launchRocket,600); // More rockets
 }
 
 function stopFireworks(){
@@ -286,18 +270,12 @@ yesButton.addEventListener("click",function(){
     createStars();
     startFireworks();
 
-    const overlay=document.createElement("div");
-    overlay.classList.add("fullscreen-gif");
-    overlay.innerHTML=`<img src="blow-kiss-cute-baby.gif">`;
-    document.body.appendChild(overlay);
-
-    setTimeout(()=>overlay.classList.add("fade-out"),12000);
+    gifContainer.innerHTML=`<img src="blow-kiss-cute-baby.gif" class="center-gif">`;
 
     setTimeout(()=>{
-        overlay.remove();
         stopFireworks();
         location.reload();
-    },16000);  // more time for fireworks
+    },14500);  // 14.5 seconds total celebration
 });
 </script>
 
